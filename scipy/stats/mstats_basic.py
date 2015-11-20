@@ -375,25 +375,26 @@ def pearsonr(x,y):
 
     """
     (x, y, n) = _chk_size(x, y)
-    (x, y) = (x.ravel(), y.ravel())
-    # Get the common mask and the total nb of unmasked elements
+    # Get the common mask and the total number of unmasked elements
     m = ma.mask_or(ma.getmask(x), ma.getmask(y))
     n -= m.sum()
     df = n-2
     if df < 0:
         return (masked, masked)
 
-    (mx, my) = (x.mean(), y.mean())
-    (xm, ym) = (x-mx, y-my)
-
-    r_num = ma.add.reduce(xm*ym)
-    r_den = ma.sqrt(ma.dot(xm,xm) * ma.dot(ym,ym))
+    # Remask to get data sets of the same size when computing variance
+    (xm, ym) = (ma.MaskedArray(x, m), ma.MaskedArray(y, m))
+    
+    # Compute correlation
+    (xm, ym) = (x - x.mean(), y - y.mean())
+    r_num = ma.add.reduce(xm, ym)
+    r_den = ma.sqrt(ma.dot(xm, xm) * ma.dot(ym, ym))
     r = r_num / r_den
+    
     # Presumably, if r > 1, then it is only some small artifact of floating
     # point arithmetic.
     r = min(r, 1.0)
     r = max(r, -1.0)
-    df = n - 2
 
     if r is masked or abs(r) == 1.0:
         prob = 0.
